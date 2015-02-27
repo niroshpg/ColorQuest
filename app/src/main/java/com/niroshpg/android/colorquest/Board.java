@@ -13,9 +13,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.color.Color;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -34,7 +32,7 @@ public class Board implements  TileEventListener{
     private float scale;
     private int[][] grid = new int[GRID_SZ][GRID_SZ];
     List<Tile> tiles = new ArrayList<>();
-    Map<Integer,Long>  tilesIdMap = new HashMap<>();
+    //Map<Integer,Long>  tilesIdMap = new HashMap<>();
     private MODE mode = MODE.PLAY;
     private int cameraHeight =-1;
     private long score = 0L;
@@ -43,7 +41,7 @@ public class Board implements  TileEventListener{
         OVER,
         UNKNOWN
     }
-    final Text statusText = new Text(cameraHeight/15f + 420, cameraHeight - 500, ResourceManager.getFont(), "Game Over !", "Game Over !     ".length(), vertexBufferObjectManager);
+    private Text statusText;// new Text(cameraHeight/15f + 420, cameraHeight - 500, ResourceManager.getFont(), "Game Over !", "Game Over !     ".length(), vertexBufferObjectManager);
 
     private List<StatusEventListener> statusEventListener = new ArrayList<>();
 
@@ -54,17 +52,17 @@ public class Board implements  TileEventListener{
         this.vertexBufferObjectManager = vbufMgr;
         this.scale = scale;
         this.cameraHeight = theCameraHieght;
-
-        Rectangle backgroundHeading = new Rectangle(cameraHeight/90f,20,0.54f*cameraHeight,275,vertexBufferObjectManager);
+        UniqueIdGenerator.reset();
+        Rectangle backgroundHeading = new Rectangle(cameraHeight/90f,cameraHeight/90f,0.54f*cameraHeight,cameraHeight*0.72f,vertexBufferObjectManager);
         backgroundHeading.setColor(0.9f,0.9f,0.9f,1f);
         mScene.attachChild(backgroundHeading);
 
 
-        Rectangle backgroundCentre = new Rectangle(cameraHeight/90f,320,0.54f*cameraHeight,cameraHeight - 620,vertexBufferObjectManager);
+        Rectangle backgroundCentre = new Rectangle(cameraHeight/90f,cameraHeight *.18f,0.54f*cameraHeight,cameraHeight - 0.35f*cameraHeight,vertexBufferObjectManager);
         backgroundCentre.setColor(0.9f,0.9f,0.9f,1f);
         mScene.attachChild(backgroundCentre);
 
-        Rectangle backgroundBottom = new Rectangle(cameraHeight/90f,cameraHeight - 250,0.54f*cameraHeight,230,vertexBufferObjectManager);
+        Rectangle backgroundBottom = new Rectangle(cameraHeight/90f,cameraHeight - 0.14f*cameraHeight,0.54f*cameraHeight,0.13f*cameraHeight,vertexBufferObjectManager);
         backgroundBottom.setColor(0.9f,0.9f,0.9f,1f);
         mScene.attachChild(backgroundBottom);
 
@@ -107,6 +105,7 @@ public class Board implements  TileEventListener{
         final Text scoreText = new Text(cameraHeight/15f, cameraHeight - 500,ResourceManager.getFont() , "Score:", "Score: XXXXXXXXXX".length(), vertexBufferObjectManager);
         final Text bestScoreText = new Text(cameraHeight/15f + 420, cameraHeight - 500, ResourceManager.getFont(), "Best:", "Best: XXXXXXXXXX".length(), vertexBufferObjectManager);
         final Text titleText = new Text(cameraHeight/20f , 80, ResourceManager.getTileFont(), "Color Quest", "Color Quest".length(), vertexBufferObjectManager);
+        statusText = new Text(cameraHeight/15f + 420, cameraHeight - 400, ResourceManager.getFont(), "Game Over !", "Game Over !     ".length(), vertexBufferObjectManager);
 
         mScene.attachChild(scoreText);
         mScene.attachChild(bestScoreText);
@@ -128,13 +127,18 @@ public class Board implements  TileEventListener{
 
     private void restartGame()
     {
+        final Engine.EngineLock engineLock = engine.getEngineLock();
+        engineLock.lock();
         for(Tile aTile : tiles)
         {
             aTile.detachChildren();
             scene.detachChild(aTile);
+            scene.unregisterTouchArea(aTile);
         }
         tiles.clear();
-        tilesIdMap.clear();
+
+        engineLock.unlock();
+        //tilesIdMap.clear();
         score = 0;
 
         statusText.setText("");
@@ -148,9 +152,10 @@ public class Board implements  TileEventListener{
     }
 
     private void addTile(int[] position) {
-        Long id = UniqueIdGenerator.getNextId();
-        if(!isIdInMap(id))
+
+        if(!isTileInPosition(position))
         {
+            Long id = UniqueIdGenerator.getNextId();
             float[] screenPoint = CoordinateConversionUtility.tilePointToScreenPoint(position,tileWidth);
             Tile tile = new Tile(screenPoint[0],screenPoint[1],tileWidth*SCALE,tileWidth*SCALE,vertexBufferObjectManager, position,tileWidth);
             tile.setColor(getNextRandomColor());
@@ -162,24 +167,26 @@ public class Board implements  TileEventListener{
             String idText =  String.format("%1$" + 5 + "s",tile.getNumber());
             final Text tileContentText = new Text(tile.getWidth()/4,tile.getHeight()/4 ,ResourceManager.getTileContentFont() ,  idText, idText.length(),vertexBufferObjectManager);
             tile.setTileContentText(tileContentText);
+
             tile.attachChild(tileContentText);
             statusEventListener.add(tile);
             //grid[position[1]][position[0]]=id;
             tiles.add(tile);
             scene.registerTouchArea(tile);
             scene.attachChild(tile);
-            tilesIdMap.put(generateIndex(position),id);
+            //tilesIdMap.put(generateIndex(position),id);
+          //  dump();
            // Log.i(LOG_TAG,"screen point = " + screenPoint[0]+","+screenPoint[1]+" - grid point : "+ position[0]+","+position[1] );
         }
     }
     private void addBackgroundTile(int[] position,Color color) {
-        Long id = UniqueIdGenerator.getNextId();
-        if(!isIdInMap(id)) {
+
+       // if(!isTileInPosition(position)) {
             float[] screenPoint = CoordinateConversionUtility.tilePointToScreenPoint(position, tileWidth);
             Rectangle rectangle = new Rectangle(screenPoint[0], screenPoint[1], tileWidth * SCALE, tileWidth * SCALE, vertexBufferObjectManager);
             rectangle.setColor(color);
             scene.attachChild(rectangle);
-        }
+        //}
     }
 
 
@@ -204,19 +211,19 @@ public class Board implements  TileEventListener{
         return color;
     }
 
-    private boolean isIdInMap(Long theId)
-    {
-        boolean found = false;
-        for(Long id: tilesIdMap.values())
-        {
-            if(id == theId)
-            {
-                found = true;
-                break;
-            }
-        }
-        return found;
-    }
+//    private boolean isIdInMap(Long theId)
+//    {
+//        boolean found = false;
+//        for(Long id: tilesIdMap.values())
+//        {
+//            if(id == theId)
+//            {
+//                found = true;
+//                break;
+//            }
+//        }
+//        return found;
+//    }
     private Integer generateIndex(int[] position)
     {
        return new Integer(position[1]*GRID_SZ + position[0]);
@@ -258,10 +265,10 @@ public class Board implements  TileEventListener{
         {
             for(int j = 0; j< GRID_SZ;j++)
             {
-                Integer index = generateIndex(new int[]{i, j});
-                if(tilesIdMap.get(index)== null)
+                int [] position = new int[]{i, j};
+                if(!isTileInPosition(position))
                 {
-                    availableIndexList.add(index);
+                    availableIndexList.add(generateIndex(position));
                 }
             }
         }
@@ -291,6 +298,57 @@ public class Board implements  TileEventListener{
         return matchingTile;
     }
 
+    private boolean isTileInPosition(int [] position)
+    {
+        boolean found = false;
+
+        for(Tile aTile : tiles)
+        {
+            int[] gridPosition = aTile.getGridPosition();
+
+            if(gridPosition[0] == position[0] && gridPosition[1] == position[1])
+            {
+                found = true;
+                break;
+            }
+        }
+
+        return found;
+    }
+
+    private Tile findTileInPosition(int [] position)
+    {
+        Tile found = null;
+
+        for(Tile aTile : tiles)
+        {
+            int[] gridPosition = aTile.getGridPosition();
+
+            if(gridPosition[0] == position[0] && gridPosition[1] == position[1])
+            {
+                found = aTile;
+                break;
+            }
+        }
+
+        return found;
+    }
+    private int[] moveTilePositionByGivenOffset(int[] currentPosition, Integer[] offset)
+    {
+        int[] newPosition = new int[2];
+
+        if (currentPosition[0] + offset[0] >= 0 && currentPosition[0] + offset[0] < GRID_SZ) {
+            newPosition[0] = currentPosition[0] + offset[0];
+        } else {
+            newPosition[0] = currentPosition[0];
+        }
+        if (currentPosition[1] + offset[1] >= 0 && currentPosition[1] + offset[1] < GRID_SZ) {
+            newPosition[1] = currentPosition[1] + offset[1];
+        } else {
+            newPosition[1] = currentPosition[1];
+        }
+        return newPosition;
+    }
 
 
     @Override
@@ -301,27 +359,26 @@ public class Board implements  TileEventListener{
 
             if (tile != null) {
                 int[] currentPosition = tile.getGridPosition();
-                int[] newPosition = new int[2];
-                if (currentPosition[0] + offset[0] >= 0 && currentPosition[0] + offset[0] < GRID_SZ) {
-                    newPosition[0] = currentPosition[0] + offset[0];
-                } else {
-                    newPosition[0] = currentPosition[0];
+                int[] newPosition;
+                int [] previousPosition = currentPosition;
+                while(true )
+                {
+                    newPosition = moveTilePositionByGivenOffset(previousPosition, offset);
+                    if(newPosition[0] == previousPosition[0] && newPosition[1] == previousPosition[1]
+                            || isTileInPosition(newPosition))
+                    {
+                        break;
+                    }
+                    previousPosition = newPosition;
                 }
-                if (currentPosition[1] + offset[1] >= 0 && currentPosition[1] + offset[1] < GRID_SZ) {
-                    newPosition[1] = currentPosition[1] + offset[1];
-                } else {
-                    newPosition[1] = currentPosition[1];
-                }
-
 
                 float[] newScreenPoint = CoordinateConversionUtility.tilePointToScreenPoint(newPosition, tileWidth);
                 //tile.setPosition(newScreenPoint[0], newScreenPoint[1]);
                 //tile.setGridPosition(newPosition);
 
                 Integer indexForNewPosition = generateIndex(newPosition);
-                Long existingTileId = tilesIdMap.get(indexForNewPosition);
-                if (existingTileId != null) {
-                    Tile existingTile = findTile(existingTileId);
+                Tile existingTile = findTileInPosition(new int[]{newPosition[0],newPosition[1]});
+                if (existingTile != null) {
 
                     if (tile.getColorType() == existingTile.getColorType()) {
                         tile.setPosition(newScreenPoint[0], newScreenPoint[1]);
@@ -329,17 +386,17 @@ public class Board implements  TileEventListener{
                         Long numberExisting = existingTile.getNumber();
                         final Engine.EngineLock engineLock = engine.getEngineLock();
                         engineLock.lock();
-
+                        //dump();
 		            /* Now it is save to remove the entity! */
                         scene.unregisterTouchArea(existingTile);
                         existingTile.detachChildren();
                         scene.detachChild(existingTile);
 
                         tiles.remove(existingTile);
-                        tilesIdMap.remove(indexForNewPosition);
-                        tilesIdMap.remove(generateIndex(currentPosition));
-                        tilesIdMap.put(indexForNewPosition, id);
-
+                        //tilesIdMap.remove(indexForNewPosition);
+                        //tilesIdMap.remove(generateIndex(currentPosition));
+                        //tilesIdMap.put(indexForNewPosition, id);
+                       // dump();
                         TileColorType colorType = tile.getColorType();
                         TileColorType nextColorType = getNextColorType(colorType);
 
@@ -358,15 +415,15 @@ public class Board implements  TileEventListener{
                     }
                     else
                     {
-                        float[] currentScreenPoint = CoordinateConversionUtility.tilePointToScreenPoint(currentPosition, tileWidth);
+                        float[] currentScreenPoint = CoordinateConversionUtility.tilePointToScreenPoint(previousPosition, tileWidth);
                         tile.setPosition(currentScreenPoint[0], currentScreenPoint[1]);
-                        tile.setGridPosition(currentPosition);
+                        tile.setGridPosition(previousPosition);
                     }
                 } else { // new position is empty, update id map to reflect the tile move
                     tile.setPosition(newScreenPoint[0], newScreenPoint[1]);
                     tile.setGridPosition(newPosition);
-                    tilesIdMap.remove(generateIndex(currentPosition));
-                    tilesIdMap.put(indexForNewPosition, id);
+                    //tilesIdMap.remove(generateIndex(currentPosition));
+                   // tilesIdMap.put(indexForNewPosition, id);
                 }
 
 
@@ -385,6 +442,20 @@ public class Board implements  TileEventListener{
             }
         }
     }
+
+//    private void dump()
+//    {
+//        Log.i(LOG_TAG,"tiles:");
+//        for(Tile aTile : tiles)
+//        {
+//            Log.i(LOG_TAG,String.valueOf(aTile.getId()) + " ");
+//        }
+//        Log.i(LOG_TAG,"tilesIdMap:");
+//        for(Long id : tilesIdMap.values())
+//        {
+//            Log.i(LOG_TAG,String.valueOf(id) + " ");
+//        }
+//    }
 
     private void notifyStatus()
     {

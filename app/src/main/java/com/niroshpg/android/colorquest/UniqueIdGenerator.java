@@ -15,4 +15,9 @@ public class UniqueIdGenerator {
     {
         return uid++;
     }
+
+    public static void reset()
+    {
+        uid = 0;
+    }
 }

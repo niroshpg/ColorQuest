@@ -30,10 +30,10 @@ public class Utility {
                 color = Color.BLUE;
                 break;
             case INDIGO:
-                color = new Color(0f,0f,1f,1f);
+                color = new Color(0.3f,0f,0.5f,1f);
                 break;
             case VIOLATE:
-                color = new Color(0f,0f,1f,1f);
+                color = new Color(0.65f,0f,1f,1f);
                 break;
             default:
                 break;
@@ -66,11 +66,12 @@ public class Utility {
         {
             colorType = TileColorType.BLUE;
         }
-        if((color.getRed() == 0x00) && (color.getBlue() == 0x00) && (color.getGreen() == 0xFF))
+
+        if((color.getRed() == 0.3f) && (color.getBlue() == 0x00) && (color.getGreen() == 0.5f))
         {
             colorType = TileColorType.INDIGO;
         }
-        if((color.getRed() == 0x00) && (color.getBlue() == 0x00) && (color.getGreen() == 0xFF))
+        if((color.getRed() == 0.65) && (color.getBlue() == 0x00) && (color.getGreen() == 1f))
         {
             colorType = TileColorType.VIOLATE;
         }
