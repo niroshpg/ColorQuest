@@ -13,7 +13,9 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.color.Color;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -36,6 +38,19 @@ public class Board implements  TileEventListener{
     private MODE mode = MODE.PLAY;
     private int cameraHeight =-1;
     private long score = 0L;
+    private long bestScore = 0L;
+    public long getScore() {
+        return score;
+    }
+
+    public long getBestScore() {
+        return bestScore;
+    }
+
+    public void setBestScore(long bestScore) {
+        this.bestScore = bestScore;
+    }
+
     public enum MODE{
         PLAY,
         OVER,
@@ -66,9 +81,9 @@ public class Board implements  TileEventListener{
         backgroundBottom.setColor(0.9f,0.9f,0.9f,1f);
         mScene.attachChild(backgroundBottom);
 
-        final Text commandButtonText = new Text(30, 60,ResourceManager.getFont() , "New Game", "New Game".length(), vertexBufferObjectManager);
+        final Text commandButtonText = new Text(25, 30,ResourceManager.getFont() , "New Game", "New Game".length(), vertexBufferObjectManager);
 
-        Rectangle commandButton = new Rectangle(cameraHeight/20f + cameraHeight*0.4f , 40,tileWidth * SCALE, tileWidth * SCALE,vertexBufferObjectManager){
+        Rectangle commandButton = new Rectangle(cameraHeight/20f + cameraHeight*0.38f , (cameraHeight/90f)*4,tileWidth * SCALE*1.1f, tileWidth * SCALE *.75f,vertexBufferObjectManager){
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if(mode == MODE.OVER)
@@ -80,7 +95,7 @@ public class Board implements  TileEventListener{
             }
         };
         commandButtonText.setText("New");
-        commandButton.setColor(0.7f,0.7f,0.7f,1f);
+        commandButton.setColor(0.6f,0.6f,0.6f,1f);
         commandButton.attachChild(commandButtonText);
         scene.registerTouchArea(commandButton);
         mScene.attachChild(commandButton);
@@ -105,12 +120,12 @@ public class Board implements  TileEventListener{
         final Text scoreText = new Text(cameraHeight/15f, cameraHeight - 500,ResourceManager.getFont() , "Score:", "Score: XXXXXXXXXX".length(), vertexBufferObjectManager);
         final Text bestScoreText = new Text(cameraHeight/15f + 420, cameraHeight - 500, ResourceManager.getFont(), "Best:", "Best: XXXXXXXXXX".length(), vertexBufferObjectManager);
         final Text titleText = new Text(cameraHeight/20f , 80, ResourceManager.getTileFont(), "Color Quest", "Color Quest".length(), vertexBufferObjectManager);
-        statusText = new Text(cameraHeight/15f + 420, cameraHeight - 400, ResourceManager.getFont(), "Game Over !", "Game Over !     ".length(), vertexBufferObjectManager);
+        statusText = new Text(cameraHeight/15f, cameraHeight - 220, ResourceManager.getFont(), "Game Over !", "Game Over !     ".length(), vertexBufferObjectManager);
 
         mScene.attachChild(scoreText);
         mScene.attachChild(bestScoreText);
         mScene.attachChild(titleText);
-        statusText.setText("Ready");
+        statusText.setText("");
         mScene.attachChild(statusText);
 
         
@@ -118,7 +133,7 @@ public class Board implements  TileEventListener{
             @Override
             public void onTimePassed(final TimerHandler pTimerHandler) {
                 scoreText.setText("Score: " + score);
-                bestScoreText.setText("Best: " + 0);
+                bestScoreText.setText("Best: " + bestScore);
 
             }
         }));
@@ -436,9 +451,14 @@ public class Board implements  TileEventListener{
             }
             else
             {
-                mode = MODE.OVER;
-                statusText.setText("Game Over!");
-                notifyStatus();
+                if(!checkValidMoves()) {
+                    mode = MODE.OVER;
+                    statusText.setText("Game Over!");
+                    if (score > bestScore) {
+                        bestScore = score;
+                    }
+                    notifyStatus();
+                }
             }
         }
     }
@@ -456,6 +476,59 @@ public class Board implements  TileEventListener{
 //            Log.i(LOG_TAG,String.valueOf(id) + " ");
 //        }
 //    }
+
+
+    private boolean checkValidMoves()
+    {
+        boolean validMoves = false;
+        Map<TileColorType,List<Integer[]>> colorTypeTpPositionMap = new HashMap<>();
+
+        for(Tile aTile : tiles)
+        {
+            TileColorType tileColorType = aTile.getColorType();
+            int [] position = aTile.getGridPosition();
+            List<Integer[]> list = colorTypeTpPositionMap.get(tileColorType);
+            if(list == null)
+            {
+                list = new ArrayList<>();
+                list.add(new Integer[]{position[0],position[1]});
+                colorTypeTpPositionMap.put(tileColorType,list);
+            }
+            else {
+                list.add(new Integer[]{position[0], position[1]});
+            }
+
+        }
+
+        for( List<Integer[]> positionList : colorTypeTpPositionMap.values())
+        {
+            for(Integer[] position : positionList)
+            {
+                int x = position[0];
+                int y = position[1];
+                for(Integer[] aPosition : positionList)
+                {
+                    int x1 = aPosition[0];
+                    int y1 = aPosition[1];
+                    if(!(x==x1 && y == y1))
+                    {
+                        if((x==x1 && Math.abs(y-y1)==1) || ( y==y1 && Math.abs(x-x1)==1))
+                        {
+                            validMoves = true;
+                            break;
+                        }
+                    }
+
+                }
+                if(validMoves)
+                {
+                    break;
+                }
+            }
+        }
+
+        return validMoves;
+    }
 
     private void notifyStatus()
     {

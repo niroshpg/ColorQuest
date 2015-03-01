@@ -1,9 +1,10 @@
 package com.niroshpg.android.colorquest;
 
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.DisplayMetrics;
 import android.view.Display;
-import android.widget.Toast;
 
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
@@ -66,7 +67,6 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
         @Override
         public EngineOptions onCreateEngineOptions() {
-            Toast.makeText(this, "Touch & Drag the face!", Toast.LENGTH_LONG).show();
             final Display display = getWindowManager().getDefaultDisplay();
             DisplayMetrics outMetrics = new DisplayMetrics();
             display.getMetrics(outMetrics);
@@ -113,7 +113,7 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             float tileWidth = cameraHeight/16f; //12f
             VertexBufferObjectManager vbufMgr = this.getVertexBufferObjectManager();
             board = new Board(mScene,mEngine,tileWidth,vbufMgr,scale,cameraHeight);
-
+            loadPreferences();
             mScene.setTouchAreaBindingOnActionDownEnabled(true);
 
 
@@ -131,6 +131,30 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             return false;
         }
 
-
+    @Override
+    protected void onPause() {
+        super.onPause();
+        //setting preferences
+        SharedPreferences prefs = this.getSharedPreferences("colorQuestBestScoreKey", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putLong("bestScore", board.getBestScore());
+        editor.commit();
     }
+
+    private void loadPreferences()
+    {
+        SharedPreferences prefs = this.getSharedPreferences("colorQuestBestScoreKey", Context.MODE_PRIVATE);
+        long bestScore = prefs.getLong("bestScore", 0); //0 is the default value
+        if(board != null)
+        {
+            board.setBestScore(bestScore);
+        }
+    }
+
+    @Override
+    protected synchronized void onResume() {
+        super.onResume();
+        loadPreferences();
+    }
+}
 
