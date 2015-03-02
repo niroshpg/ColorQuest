@@ -10,18 +10,25 @@ import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
-import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.bitmap.BitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.color.Color;
+import org.andengine.util.debug.Debug;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 
 public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener{
@@ -41,15 +48,18 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         // Fields
         // ===========================================================
 
-        private BitmapTextureAtlas mBitmapTextureAtlas;
-        private ITextureRegion mFaceTextureRegion;
-        private Rectangle myRectangle;
-        private Rectangle[][] otherRectangle;
+
+
+        private ITexture mTexture;
+        private ITextureRegion mBannerTextureRegion;
+
+        private ITexture mButtonTexture;
+        private ITextureRegion mButtonTextureRegion;
 
         private Camera mCamera;
         private Scene mScene;
 
-
+        private static final float DEFAULT_SCALE = 0.6f;
 
         Board board;
 
@@ -94,7 +104,32 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             //this.mBitmapTextureAtlas.load();
 
             //otherRectangle = new Rectangle[GRID_SZ][GRID_SZ];
-            ResourceManager.loadResources(this.getFontManager(),this.getTextureManager());
+            ResourceManager.loadResources(this,this.getFontManager(),this.getTextureManager());
+
+            try {
+                this.mTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+                    @Override
+                    public InputStream open() throws IOException {
+                        return getAssets().open("gfx/ic_launcher.png");
+                    }
+                });
+
+                this.mTexture.load();
+                this.mBannerTextureRegion = TextureRegionFactory.extractFromTexture(this.mTexture);
+
+                this.mButtonTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
+                    @Override
+                    public InputStream open() throws IOException {
+                        return getAssets().open("gfx/ic_button.png");
+                    }
+                });
+
+                this.mButtonTexture.load();
+                this.mButtonTextureRegion = TextureRegionFactory.extractFromTexture(this.mButtonTexture);
+
+            } catch (IOException e) {
+                Debug.e(e);
+            }
 
         }
 
@@ -116,6 +151,24 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             loadPreferences();
             mScene.setTouchAreaBindingOnActionDownEnabled(true);
 
+            final Sprite banner = new Sprite(cameraHeight/20f , 0.045f*cameraHeight, this.mBannerTextureRegion, this.getVertexBufferObjectManager());
+            banner.setScale(DEFAULT_SCALE * ResourceManager.getDisplayMetrics(this).density);
+            mScene.attachChild(banner);
+
+            final Sprite playButton = new Sprite(cameraHeight*0.38f , (cameraHeight/90f)*4, this.mButtonTextureRegion, this.getVertexBufferObjectManager()){
+                @Override
+                public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+                    if(board.getMode() == Board.MODE.OVER)
+                    {
+                        board.setMode( Board.MODE.PLAY);
+                    }
+                    board.restartGame();
+                    return true;
+                }
+            };
+            playButton.setScale(DEFAULT_SCALE * ResourceManager.getDisplayMetrics(this).density);
+            mScene.attachChild(playButton);
+
 
             return mScene;
         }
@@ -135,10 +188,12 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     protected void onPause() {
         super.onPause();
         //setting preferences
-        SharedPreferences prefs = this.getSharedPreferences("colorQuestBestScoreKey", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putLong("bestScore", board.getBestScore());
-        editor.commit();
+        if(board != null) {
+            SharedPreferences prefs = this.getSharedPreferences("colorQuestBestScoreKey", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putLong("bestScore", board.getBestScore());
+            editor.commit();
+        }
     }
 
     private void loadPreferences()

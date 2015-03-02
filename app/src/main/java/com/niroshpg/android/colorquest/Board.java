@@ -39,6 +39,10 @@ public class Board implements  TileEventListener{
     private int cameraHeight =-1;
     private long score = 0L;
     private long bestScore = 0L;
+    private Rectangle backgroundCentre ;
+    private Text scoreLableText;
+    private Text bestScoreLabelText;
+
     public long getScore() {
         return score;
     }
@@ -49,6 +53,14 @@ public class Board implements  TileEventListener{
 
     public void setBestScore(long bestScore) {
         this.bestScore = bestScore;
+    }
+
+    public MODE getMode() {
+        return mode;
+    }
+
+    public void setMode(MODE mode) {
+        this.mode = mode;
     }
 
     public enum MODE{
@@ -70,20 +82,21 @@ public class Board implements  TileEventListener{
         UniqueIdGenerator.reset();
         Rectangle backgroundHeading = new Rectangle(cameraHeight/90f,cameraHeight/90f,0.54f*cameraHeight,cameraHeight*0.72f,vertexBufferObjectManager);
         backgroundHeading.setColor(0.9f,0.9f,0.9f,1f);
-        mScene.attachChild(backgroundHeading);
+        //mScene.attachChild(backgroundHeading);
 
 
-        Rectangle backgroundCentre = new Rectangle(cameraHeight/90f,cameraHeight *.18f,0.54f*cameraHeight,cameraHeight - 0.35f*cameraHeight,vertexBufferObjectManager);
-        backgroundCentre.setColor(0.9f,0.9f,0.9f,1f);
-        mScene.attachChild(backgroundCentre);
+        backgroundCentre = new Rectangle(0.05f*cameraHeight,cameraHeight *.18f,0.48f*cameraHeight,0.48f*cameraHeight,vertexBufferObjectManager);
+        backgroundCentre.setColor(0.9f,0.9f,0.9f,0.5f);
+
+       // mScene.attachChild(backgroundCentre);
 
         Rectangle backgroundBottom = new Rectangle(cameraHeight/90f,cameraHeight - 0.14f*cameraHeight,0.54f*cameraHeight,0.13f*cameraHeight,vertexBufferObjectManager);
         backgroundBottom.setColor(0.9f,0.9f,0.9f,1f);
-        mScene.attachChild(backgroundBottom);
+       // mScene.attachChild(backgroundBottom);
 
         final Text commandButtonText = new Text(25, 30,ResourceManager.getFont() , "New Game", "New Game".length(), vertexBufferObjectManager);
 
-        Rectangle commandButton = new Rectangle(cameraHeight/20f + cameraHeight*0.38f , (cameraHeight/90f)*4,tileWidth * SCALE*1.1f, tileWidth * SCALE *.75f,vertexBufferObjectManager){
+        Rectangle commandButton = new Rectangle(cameraHeight*0.42f , (cameraHeight/90f)*4,tileWidth * SCALE*1.1f, tileWidth * SCALE *.75f,vertexBufferObjectManager){
             @Override
             public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
                 if(mode == MODE.OVER)
@@ -95,10 +108,12 @@ public class Board implements  TileEventListener{
             }
         };
         commandButtonText.setText("New");
-        commandButton.setColor(0.6f,0.6f,0.6f,1f);
+        commandButton.setColor(0.95f,0.95f,0.95f,.8f);
         commandButton.attachChild(commandButtonText);
         scene.registerTouchArea(commandButton);
-        mScene.attachChild(commandButton);
+       // mScene.attachChild(commandButton);
+
+
 
         int[][] position = new int[GRID_SZ][GRID_SZ];
         Color bgColor = new Color(0.8f,0.8f,0.8f,1f);
@@ -117,30 +132,30 @@ public class Board implements  TileEventListener{
 
         notifyStatus();
 
-        final Text scoreText = new Text(cameraHeight/15f, cameraHeight - 500,ResourceManager.getFont() , "Score:", "Score: XXXXXXXXXX".length(), vertexBufferObjectManager);
-        final Text bestScoreText = new Text(cameraHeight/15f + 420, cameraHeight - 500, ResourceManager.getFont(), "Best:", "Best: XXXXXXXXXX".length(), vertexBufferObjectManager);
-        final Text titleText = new Text(cameraHeight/20f , 80, ResourceManager.getTileFont(), "Color Quest", "Color Quest".length(), vertexBufferObjectManager);
-        statusText = new Text(cameraHeight/15f, cameraHeight - 220, ResourceManager.getFont(), "Game Over !", "Game Over !     ".length(), vertexBufferObjectManager);
+        final Text scoreText = new Text(cameraHeight/15f, 0.75f*cameraHeight ,ResourceManager.getLargeFont() , "Score:", "Score: XXXXXXXXXX".length(), vertexBufferObjectManager);
+        final Text bestScoreText = new Text(cameraHeight/15f + 0.25f*cameraHeight, 0.75f*cameraHeight, ResourceManager.getLargeFont(), "Best:", "Best: XXXXXXXXXX".length(), vertexBufferObjectManager);
+        final Text titleText = new Text(cameraHeight/20f , 0.045f*cameraHeight, ResourceManager.getTileFont(), "Color Quest", "Color Quest".length(), vertexBufferObjectManager);
+        statusText = new Text(.1f*cameraHeight, 0.35f*cameraHeight, ResourceManager.getLargeFont(), "Game Over !", "Game Over !     ".length(), vertexBufferObjectManager);
+        scoreLableText = new Text(cameraHeight/15f, 0.70f*cameraHeight,ResourceManager.getTileContentFont() , "SCORE", "SCORE".length(), vertexBufferObjectManager);
+        bestScoreLabelText = new Text(cameraHeight/15f + 0.25f*cameraHeight, 0.70f*cameraHeight,ResourceManager.getTileContentFont() , "BEST SCORE", "BEST SCORE".length(), vertexBufferObjectManager);
 
         mScene.attachChild(scoreText);
         mScene.attachChild(bestScoreText);
-        mScene.attachChild(titleText);
+        //mScene.attachChild(titleText);
         statusText.setText("");
-        mScene.attachChild(statusText);
+        //mScene.attachChild(statusText);
 
-        
         scene.registerUpdateHandler(new TimerHandler(1 / 20.0f, true, new ITimerCallback() {
             @Override
             public void onTimePassed(final TimerHandler pTimerHandler) {
-                scoreText.setText("Score: " + score);
-                bestScoreText.setText("Best: " + bestScore);
-
+                scoreText.setText( String.valueOf(score));
+                bestScoreText.setText(String.valueOf(bestScore) );
             }
         }));
 
     }
 
-    private void restartGame()
+    protected void restartGame()
     {
         final Engine.EngineLock engineLock = engine.getEngineLock();
         engineLock.lock();
@@ -150,6 +165,10 @@ public class Board implements  TileEventListener{
             scene.detachChild(aTile);
             scene.unregisterTouchArea(aTile);
         }
+        scene.detachChild(statusText);
+        scene.detachChild(backgroundCentre);
+        scene.detachChild(scoreLableText);
+        scene.detachChild(bestScoreLabelText);
         tiles.clear();
 
         engineLock.unlock();
@@ -421,7 +440,11 @@ public class Board implements  TileEventListener{
                         tile.setNumber(number+numberExisting);
 
                         tile.getTileContentText().setText(String.valueOf(tile.getNumber()));
-                        score += 5;
+                        score += (number+numberExisting);
+                        if(tile.getColorType() == TileColorType.VIOLATE)
+                        {
+                            shrinkBoard();
+                        }
                         engineLock.unlock();
 //                        addTileWithColor(
 //                                existingTile.getGridPosition(),
@@ -457,10 +480,77 @@ public class Board implements  TileEventListener{
                     if (score > bestScore) {
                         bestScore = score;
                     }
+
+                    scene.attachChild(backgroundCentre);
+                    scene.attachChild(statusText);
+                    scene.attachChild(scoreLableText);
+                    scene.attachChild(bestScoreLabelText);
+
                     notifyStatus();
                 }
             }
         }
+    }
+
+    private void shrinkBoard() {
+
+        Map<TileColorType, List<Tile>> colorTypeTpPositionMap = new HashMap<>();
+        List<Long> tilesToDelete = new ArrayList<>();
+
+        for(Tile aTile : tiles)
+        {
+            TileColorType tileColorType = aTile.getColorType();
+            List<Tile> list = colorTypeTpPositionMap.get(tileColorType);
+            if(list == null)
+            {
+                list = new ArrayList<>();
+                list.add(aTile);
+                colorTypeTpPositionMap.put(tileColorType,list);
+            }
+            else {
+                list.add(aTile);
+            }
+
+        }
+
+        for( List<Tile> positionList : colorTypeTpPositionMap.values())
+        {
+            int index =0;
+            Long selectedTileId = null;
+            int newNumber = 0;
+            for(Tile aTile : positionList)
+            {
+                if(index == 0 )
+                {
+                    selectedTileId = aTile.getId();
+                }
+                else
+                {
+                    newNumber += aTile.getNumber();
+                    tilesToDelete.add(aTile.getId());
+                }
+                index++;
+
+            }
+            Tile selectedTile = findTile(selectedTileId);
+            if(selectedTile != null)
+            {
+                selectedTile.setNumber(new Long(newNumber));
+            }
+
+            for(Long aId : tilesToDelete)
+            {
+                Tile aTile = findTile(aId);
+                if(aTile != null && aTile.getColorType() != TileColorType.VIOLATE)
+                {
+                    scene.unregisterTouchArea(aTile);
+                    scene.detachChild(aTile);
+                    tiles.remove(aTile);
+                }
+            }
+        }
+
+        //return validMoves;
     }
 
 //    private void dump()

@@ -1,6 +1,10 @@
 package com.niroshpg.android.colorquest;
 
+import android.content.Context;
 import android.graphics.Typeface;
+import android.util.DisplayMetrics;
+import android.view.Display;
+import android.view.WindowManager;
 
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.font.FontFactory;
@@ -17,16 +21,42 @@ public class ResourceManager {
     private static Font tileFont;
     private static Font tileContentFont;
 
-    public static void loadResources(FontManager fontManager, TextureManager textureManager)
+    private static final int DEFAULT_FONT_SIZE = 20;
+    private static Font largeFont;
+    private static Font smallFont;
+
+
+    public static DisplayMetrics getDisplayMetrics(Context context)
     {
-        font = FontFactory.create(fontManager,textureManager, 512, 512, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 72);
+        WindowManager windowManager=(WindowManager)(context).getSystemService(Context.WINDOW_SERVICE);
+
+        Display display = windowManager.getDefaultDisplay();
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+
+        display.getMetrics(displayMetrics);
+        return displayMetrics;
+    }
+
+    public static void loadResources(Context context,FontManager fontManager, TextureManager textureManager)
+    {
+        DisplayMetrics displayMetrics = getDisplayMetrics(context);
+        final float fontSize = DEFAULT_FONT_SIZE * displayMetrics.density ;
+
+        font = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), fontSize * 1.2f);
         font.load();
 
-        tileFont = FontFactory.create(fontManager,textureManager, 512, 512, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 96);
+        largeFont = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), fontSize * 2f);
+        largeFont.load();
+
+        smallFont = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), fontSize * 1.2f);
+        smallFont.load();
+
+        tileFont = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), fontSize * 1.5f);
         tileFont.load();
 
 
-        tileContentFont = FontFactory.create(fontManager,textureManager, 512, 512, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 60);
+        tileContentFont = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), fontSize);
         tileContentFont.load();
     }
 
@@ -34,23 +64,15 @@ public class ResourceManager {
         return font;
     }
 
-    public static void setFont(Font mFont) {
-        ResourceManager.font = mFont;
-    }
-
     public static Font getTileFont() {
         return tileFont;
-    }
-
-    public static void setTileFont(Font mTileFont) {
-        ResourceManager.tileFont = mTileFont;
     }
 
     public static Font getTileContentFont() {
         return tileContentFont;
     }
 
-    public static void setTileContentFont(Font mTileContentFont) {
-        ResourceManager.tileContentFont = mTileContentFont;
+    public static Font getLargeFont() {
+        return largeFont;
     }
 }
