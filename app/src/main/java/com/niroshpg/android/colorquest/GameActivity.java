@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.MotionEvent;
 
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
@@ -105,12 +106,21 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
             //otherRectangle = new Rectangle[GRID_SZ][GRID_SZ];
             ResourceManager.loadResources(this,this.getFontManager(),this.getTextureManager());
+            final float density = ResourceManager.getDisplayMetrics(this).density;
 
             try {
                 this.mTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
                     @Override
                     public InputStream open() throws IOException {
-                        return getAssets().open("gfx/ic_launcher.png");
+                        if(density > 1)
+                        {
+                            return getAssets().open("gfx/hdpi/ic_launcher.png");
+                        }
+                        else
+                        {
+                            return getAssets().open("gfx/ldpi/ic_launcher.png");
+                        }
+
                     }
                 });
 
@@ -120,7 +130,15 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
                 this.mButtonTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
                     @Override
                     public InputStream open() throws IOException {
-                        return getAssets().open("gfx/ic_button.png");
+                        if(density > 1)
+                        {
+                            return getAssets().open("gfx/hdpi/ic_button.png");
+                        }
+                        else
+                        {
+                            return getAssets().open("gfx/ldpi/ic_button.png");
+                        }
+
                     }
                 });
 
@@ -150,25 +168,35 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             board = new Board(mScene,mEngine,tileWidth,vbufMgr,scale,cameraHeight);
             loadPreferences();
             mScene.setTouchAreaBindingOnActionDownEnabled(true);
+            float density = ResourceManager.getDisplayMetrics(this).density;
+            final Sprite banner = new Sprite(tileWidth , 1.1f*tileWidth, this.mBannerTextureRegion, this.getVertexBufferObjectManager());
 
-            final Sprite banner = new Sprite(cameraHeight/20f , 0.045f*cameraHeight, this.mBannerTextureRegion, this.getVertexBufferObjectManager());
-            banner.setScale(DEFAULT_SCALE * ResourceManager.getDisplayMetrics(this).density);
+
+            //banner.setScale(DEFAULT_SCALE * density);
+            mScene.registerTouchArea(banner);
             mScene.attachChild(banner);
-
-            final Sprite playButton = new Sprite(cameraHeight*0.38f , (cameraHeight/90f)*4, this.mButtonTextureRegion, this.getVertexBufferObjectManager()){
+    // 3*tileWidth - 1.9f*tileWidth
+            // 1*tileWidth +2* 1.9f*tileWidth
+            final Sprite playButton = new Sprite(tileWidth*6.0f , 1.1f*tileWidth, this.mButtonTextureRegion, this.getVertexBufferObjectManager()){
                 @Override
                 public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-                    if(board.getMode() == Board.MODE.OVER)
-                    {
-                        board.setMode( Board.MODE.PLAY);
+                    switch (pSceneTouchEvent.getMotionEvent().getAction()) {
+                        case MotionEvent.ACTION_UP:
+                            if(board.getMode() == Board.MODE.OVER)
+                            {
+                                board.setMode( Board.MODE.PLAY);
+                            }
+                            board.restartGame();
+                            break;
                     }
-                    board.restartGame();
                     return true;
                 }
             };
-            playButton.setScale(DEFAULT_SCALE * ResourceManager.getDisplayMetrics(this).density);
-            mScene.attachChild(playButton);
 
+           // playButton.setScale(DEFAULT_SCALE * density);
+
+            mScene.attachChild(playButton);
+            mScene.registerTouchArea(playButton);
 
             return mScene;
         }

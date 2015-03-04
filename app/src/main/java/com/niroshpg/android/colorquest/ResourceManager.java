@@ -46,7 +46,7 @@ public class ResourceManager {
         font = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), fontSize * 1.2f);
         font.load();
 
-        largeFont = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), fontSize * 2f);
+        largeFont = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL), fontSize * 2f);
         largeFont.load();
 
         smallFont = FontFactory.create(fontManager,textureManager, 1024, 1024, TextureOptions.BILINEAR, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), fontSize * 1.2f);

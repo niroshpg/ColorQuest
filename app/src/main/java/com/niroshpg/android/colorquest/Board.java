@@ -412,7 +412,7 @@ public class Board implements  TileEventListener{
 
                 Integer indexForNewPosition = generateIndex(newPosition);
                 Tile existingTile = findTileInPosition(new int[]{newPosition[0],newPosition[1]});
-                if (existingTile != null) {
+                if (existingTile != null && tile.getId() != existingTile.getId()) {
 
                     if (tile.getColorType() == existingTile.getColorType()) {
                         tile.setPosition(newScreenPoint[0], newScreenPoint[1]);
@@ -466,29 +466,33 @@ public class Board implements  TileEventListener{
 
 
                 Log.i(LOG_TAG, "new screen point = " + newScreenPoint[0] + "," + newScreenPoint[1] + " - new grid point : " + newPosition[0] + "," + newPosition[1]);
+                int[] nextPosition = getNextFreeLocation();
+                int[] newGridPosition = tile.getGridPosition();
+                if (nextPosition[0] != -1 && nextPosition[1] != -1 )
+                {
+                       if( !(newGridPosition[0] == currentPosition[0] && newGridPosition[1] == currentPosition[1])) {
+                           addTile(nextPosition);
+                       }
+                }
+                else
+                {
+                    if(!checkValidMoves()) {
+                        mode = MODE.OVER;
+                        statusText.setText("Game Over!");
+                        if (score > bestScore) {
+                            bestScore = score;
+                        }
 
-            }
-            int[] nextPosition = getNextFreeLocation();
-            if (nextPosition[0] != -1 && nextPosition[1] != -1) {
-                addTile(nextPosition);
-            }
-            else
-            {
-                if(!checkValidMoves()) {
-                    mode = MODE.OVER;
-                    statusText.setText("Game Over!");
-                    if (score > bestScore) {
-                        bestScore = score;
+                        scene.attachChild(backgroundCentre);
+                        scene.attachChild(statusText);
+                        scene.attachChild(scoreLableText);
+                        scene.attachChild(bestScoreLabelText);
+
+                        notifyStatus();
                     }
-
-                    scene.attachChild(backgroundCentre);
-                    scene.attachChild(statusText);
-                    scene.attachChild(scoreLableText);
-                    scene.attachChild(bestScoreLabelText);
-
-                    notifyStatus();
                 }
             }
+
         }
     }
 
