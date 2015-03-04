@@ -62,7 +62,8 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
         private static final float DEFAULT_SCALE = 0.6f;
 
-        Board board;
+        private Board board;
+       // private AdView adView;
 
         // ===========================================================
         // Constructors
@@ -197,7 +198,6 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
             mScene.attachChild(playButton);
             mScene.registerTouchArea(playButton);
-
             return mScene;
         }
 
@@ -239,5 +239,54 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         super.onResume();
         loadPreferences();
     }
+/*
+    @Override
+    protected void onSetContentView() {
+        // CREATING the parent FrameLayout //
+        final FrameLayout frameLayout = new FrameLayout(this);
+
+        // CREATING the layout parameters, fill the screen //
+        final FrameLayout.LayoutParams frameLayoutLayoutParams =
+                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT);
+
+        // CREATING a Smart Banner View //
+        PublisherAdView adView = new PublisherAdView(this);
+        adView.setAdUnitId(this.getResources().getString(R.string.banner_ad_unit_id));
+        adView.setAdSizes(com.google.android.gms.ads.AdSize.BANNER);
+
+        // Doing something I'm not 100% sure on, but guessing by the name //
+        adView.refreshDrawableState();
+        adView.setVisibility(AdView.VISIBLE);
+
+        // ADVIEW layout, show at the bottom of the screen //
+        final FrameLayout.LayoutParams adViewLayoutParams =
+                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM);
+
+        // REQUEST an ad (Test ad) //
+
+        PublisherAdRequest adRequest =
+                new PublisherAdRequest.Builder().build();
+        //adRequest.addTestDevice("MY_TEST_DEVICE_CODE");
+        adView.loadAd(adRequest);
+
+        // RENDER the add on top of the scene //
+        this.mRenderSurfaceView = new RenderSurfaceView(this);
+        mRenderSurfaceView.setRenderer(mEngine, this);
+
+        // SURFACE layout ? //
+        final android.widget.FrameLayout.LayoutParams surfaceViewLayoutParams =
+                new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams().width,super.createSurfaceViewLayoutParams().height);
+
+        // ADD the surface view and adView to the frame //
+        frameLayout.addView(this.mRenderSurfaceView, surfaceViewLayoutParams);
+        frameLayout.addView(adView, adViewLayoutParams);
+
+        // SHOW AD //
+        this.setContentView(frameLayout, frameLayoutLayoutParams);
+    }
+    */
 }
 
