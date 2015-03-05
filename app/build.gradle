@@ -17,6 +17,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    buildTypes {
+        release {
+            applicationVariants.all { variant ->
+                variant.outputs.each  { output ->
+                    def date = new Date();
+                    def formattedDate = date.format('yyyyMMddHHmmss')
+                    output.outputFile = new File(output.outputFile.parent, output.outputFile.name.replace("-release", "-release-" + defaultConfig.versionName +"-"+ formattedDate))
+                }
+            }
+        }
+    }
 }
 
 dependencies {

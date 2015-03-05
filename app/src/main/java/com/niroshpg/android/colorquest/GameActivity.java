@@ -40,6 +40,7 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         private static final int CAMERA_WIDTH_MAX = 1024;
         private static final int CAMERA_HEIGHT_MAX = 600;
         private static final int GRID_SZ = 4;
+        private static final int CAMERA_WIDTH_MIN = 600;
 
         private static int cameraWidth = CAMERA_WIDTH_MAX;
         private static int cameraHeight = CAMERA_HEIGHT_MAX;
@@ -84,7 +85,7 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             display.getMetrics(outMetrics);
             cameraWidth = outMetrics.widthPixels;
             cameraHeight =outMetrics.heightPixels;
-            if (cameraWidth > CAMERA_WIDTH_MAX) {
+            if (cameraWidth > CAMERA_WIDTH_MAX || cameraWidth < CAMERA_WIDTH_MIN) {
                 final float ratio = (float) cameraHeight / (float) cameraWidth;
                 cameraWidth = CAMERA_WIDTH_MAX;
                 cameraHeight = (int) (cameraWidth * ratio);
@@ -113,7 +114,7 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
                 this.mTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
                     @Override
                     public InputStream open() throws IOException {
-                        if(density > 1)
+                        if(density > 2)
                         {
                             return getAssets().open("gfx/hdpi/ic_launcher.png");
                         }
@@ -131,7 +132,7 @@ public class GameActivity extends SimpleBaseGameActivity implements IOnSceneTouc
                 this.mButtonTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
                     @Override
                     public InputStream open() throws IOException {
-                        if(density > 1)
+                        if(density > 2)
                         {
                             return getAssets().open("gfx/hdpi/ic_button.png");
                         }
